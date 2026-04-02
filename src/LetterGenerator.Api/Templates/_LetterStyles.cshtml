@@ -1,0 +1,267 @@
+@* 
+    _LetterStyles.cshtml
+    Shared styles for all healthcare letter templates.
+    Uses @media print for precise PDF rendering.
+*@
+
+<style>
+    /* ── Reset & Base ──────────────────────────────────────────── */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+        font-size: 10.5pt;
+        line-height: 1.5;
+        color: #1a1a1a;
+        background: #fff;
+    }
+
+    /* ── Page Layout ───────────────────────────────────────────── */
+    .letter-container {
+        max-width: 8.5in;
+        margin: 0 auto;
+        padding: 0;
+    }
+
+    /* ── Header / Letterhead ───────────────────────────────────── */
+    .letter-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        border-bottom: 3px solid #004080;
+        padding-bottom: 12px;
+        margin-bottom: 20px;
+    }
+
+    .letter-header .org-logo img {
+        max-height: 55px;
+        width: auto;
+    }
+
+    .letter-header .org-info {
+        text-align: right;
+        font-size: 9pt;
+        color: #555;
+        line-height: 1.4;
+    }
+
+    .letter-header .org-name {
+        font-size: 16pt;
+        font-weight: 700;
+        color: #004080;
+        margin-bottom: 2px;
+    }
+
+    /* ── Letter Type Badge ─────────────────────────────────────── */
+    .letter-type-badge {
+        display: inline-block;
+        padding: 4px 16px;
+        font-size: 11pt;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        border-radius: 3px;
+        margin-bottom: 16px;
+    }
+
+    .badge-denial {
+        background-color: #c0392b;
+        color: #fff;
+    }
+
+    .badge-approval {
+        background-color: #27ae60;
+        color: #fff;
+    }
+
+    .badge-partial {
+        background-color: #e67e22;
+        color: #fff;
+    }
+
+    /* ── Date & Reference ──────────────────────────────────────── */
+    .letter-meta {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        font-size: 9.5pt;
+        color: #555;
+    }
+
+    /* ── Recipient Address Block ────────────────────────────────── */
+    .address-block {
+        margin-bottom: 20px;
+        line-height: 1.6;
+    }
+
+    .address-block .name {
+        font-weight: 600;
+    }
+
+    /* ── Section Headers ───────────────────────────────────────── */
+    .section-title {
+        font-size: 11pt;
+        font-weight: 700;
+        color: #004080;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 4px;
+        margin-top: 20px;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* ── Info Grid (key-value pairs) ────────────────────────────── */
+    .info-grid {
+        display: grid;
+        grid-template-columns: 180px 1fr;
+        gap: 4px 12px;
+        margin-bottom: 16px;
+        font-size: 10pt;
+    }
+
+    .info-grid .label {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .info-grid .value {
+        color: #1a1a1a;
+    }
+
+    /* ── Service Lines Table ────────────────────────────────────── */
+    .service-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 16px;
+        font-size: 9.5pt;
+    }
+
+    .service-table th {
+        background-color: #004080;
+        color: #fff;
+        padding: 6px 8px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 9pt;
+    }
+
+    .service-table td {
+        padding: 6px 8px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .service-table tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+
+    .status-approved { color: #27ae60; font-weight: 600; }
+    .status-denied { color: #c0392b; font-weight: 600; }
+    .status-partial { color: #e67e22; font-weight: 600; }
+
+    /* ── Narrative / Body Text ──────────────────────────────────── */
+    .letter-body {
+        margin-bottom: 16px;
+        text-align: justify;
+    }
+
+    .letter-body p {
+        margin-bottom: 10px;
+    }
+
+    /* ── Callout Box (Appeal Rights, Important Notices) ─────────── */
+    .callout-box {
+        border: 2px solid #004080;
+        border-radius: 4px;
+        padding: 14px 16px;
+        margin: 16px 0;
+        background-color: #f0f5fa;
+    }
+
+    .callout-box.warning {
+        border-color: #c0392b;
+        background-color: #fef2f1;
+    }
+
+    .callout-box .callout-title {
+        font-weight: 700;
+        font-size: 10.5pt;
+        color: #004080;
+        margin-bottom: 8px;
+    }
+
+    .callout-box.warning .callout-title {
+        color: #c0392b;
+    }
+
+    .callout-box p, .callout-box li {
+        font-size: 9.5pt;
+        margin-bottom: 4px;
+    }
+
+    .callout-box ul {
+        margin-left: 16px;
+    }
+
+    /* ── Footer ────────────────────────────────────────────────── */
+    .letter-footer {
+        margin-top: 30px;
+        padding-top: 12px;
+        border-top: 2px solid #004080;
+        font-size: 8.5pt;
+        color: #777;
+        text-align: center;
+        line-height: 1.5;
+    }
+
+    .letter-footer .confidentiality {
+        font-style: italic;
+        margin-top: 6px;
+    }
+
+    /* ── Signature Block ───────────────────────────────────────── */
+    .signature-block {
+        margin-top: 30px;
+        margin-bottom: 10px;
+    }
+
+    .signature-block .sig-line {
+        border-bottom: 1px solid #333;
+        width: 250px;
+        margin-bottom: 4px;
+    }
+
+    .signature-block .sig-name {
+        font-weight: 600;
+    }
+
+    .signature-block .sig-title {
+        font-size: 9.5pt;
+        color: #555;
+    }
+
+    /* ── Print Styles ──────────────────────────────────────────── */
+    @@media print {
+        body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .letter-container {
+            max-width: none;
+            padding: 0;
+        }
+
+        .callout-box {
+            break-inside: avoid;
+        }
+
+        .service-table {
+            break-inside: avoid;
+        }
+    }
+</style>

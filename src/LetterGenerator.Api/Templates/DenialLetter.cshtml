@@ -1,0 +1,438 @@
+@using LetterGenerator.Core.Models
+@model DenialLetterModel
+@{
+    // Helper for date formatting
+    string FormatDate(DateTime? date) => date?.ToString("MMMM dd, yyyy") ?? "N/A";
+    string FormatShortDate(DateTime? date) => date?.ToString("MM/dd/yyyy") ?? "N/A";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Adverse Benefit Determination – @Model.Member.FullName</title>
+    @{ /* Include shared styles */ }
+    <style>
+        /* ── Reset & Base ──────────────────────────────────────────── */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            font-size: 10.5pt; line-height: 1.5; color: #1a1a1a; background: #fff;
+        }
+        .letter-container { max-width: 8.5in; margin: 0 auto; padding: 0; }
+
+        /* Header */
+        .letter-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            border-bottom: 3px solid #004080; padding-bottom: 12px; margin-bottom: 20px;
+        }
+        .letter-header .org-name {
+            font-size: 16pt; font-weight: 700; color: #004080; margin-bottom: 2px;
+        }
+        .letter-header .org-info {
+            text-align: right; font-size: 9pt; color: #555; line-height: 1.4;
+        }
+        .letter-header .org-logo img { max-height: 55px; width: auto; }
+
+        /* Badge */
+        .letter-type-badge {
+            display: inline-block; padding: 4px 16px; font-size: 11pt; font-weight: 700;
+            letter-spacing: 1px; text-transform: uppercase; border-radius: 3px; margin-bottom: 16px;
+        }
+        .badge-denial { background-color: #c0392b; color: #fff; }
+
+        /* Meta & Address */
+        .letter-meta {
+            display: flex; justify-content: space-between; margin-bottom: 16px;
+            font-size: 9.5pt; color: #555;
+        }
+        .address-block { margin-bottom: 20px; line-height: 1.6; }
+        .address-block .name { font-weight: 600; }
+
+        /* Section titles */
+        .section-title {
+            font-size: 11pt; font-weight: 700; color: #004080;
+            border-bottom: 1px solid #ddd; padding-bottom: 4px;
+            margin-top: 20px; margin-bottom: 10px;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        /* Info grid */
+        .info-grid {
+            display: grid; grid-template-columns: 180px 1fr;
+            gap: 4px 12px; margin-bottom: 16px; font-size: 10pt;
+        }
+        .info-grid .label { font-weight: 600; color: #333; }
+        .info-grid .value { color: #1a1a1a; }
+
+        /* Table */
+        .service-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 9.5pt; }
+        .service-table th {
+            background-color: #004080; color: #fff; padding: 6px 8px;
+            text-align: left; font-weight: 600; font-size: 9pt;
+        }
+        .service-table td { padding: 6px 8px; border-bottom: 1px solid #e0e0e0; }
+        .service-table tr:nth-child(even) { background-color: #f8f9fa; }
+        .status-denied { color: #c0392b; font-weight: 600; }
+
+        /* Body text */
+        .letter-body { margin-bottom: 16px; text-align: justify; }
+        .letter-body p { margin-bottom: 10px; }
+
+        /* Callout */
+        .callout-box {
+            border: 2px solid #004080; border-radius: 4px;
+            padding: 14px 16px; margin: 16px 0; background-color: #f0f5fa;
+        }
+        .callout-box.warning { border-color: #c0392b; background-color: #fef2f1; }
+        .callout-box .callout-title { font-weight: 700; font-size: 10.5pt; color: #004080; margin-bottom: 8px; }
+        .callout-box.warning .callout-title { color: #c0392b; }
+        .callout-box p, .callout-box li { font-size: 9.5pt; margin-bottom: 4px; }
+        .callout-box ul { margin-left: 16px; }
+
+        /* Signature */
+        .signature-block { margin-top: 30px; margin-bottom: 10px; }
+        .signature-block .sig-name { font-weight: 600; }
+        .signature-block .sig-title { font-size: 9.5pt; color: #555; }
+
+        /* Footer */
+        .letter-footer {
+            margin-top: 30px; padding-top: 12px; border-top: 2px solid #004080;
+            font-size: 8.5pt; color: #777; text-align: center; line-height: 1.5;
+        }
+        .letter-footer .confidentiality { font-style: italic; margin-top: 6px; }
+
+        @@media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .letter-container { max-width: none; padding: 0; }
+            .callout-box, .service-table { break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+<div class="letter-container">
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- LETTERHEAD                                                      -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="letter-header">
+        <div>
+            @if (!string.IsNullOrEmpty(Model.LogoBase64))
+            {
+                <div class="org-logo">
+                    <img src="data:@Model.LogoContentType;base64,@Model.LogoBase64" alt="@Model.Organization.Name" />
+                </div>
+            }
+            <div class="org-name">@Model.Organization.Name</div>
+        </div>
+        <div class="org-info">
+            @Model.Organization.AddressLine1<br />
+            @if (!string.IsNullOrWhiteSpace(Model.Organization.AddressLine2))
+            {
+                @Model.Organization.AddressLine2<br />
+            }
+            @Model.Organization.City, @Model.Organization.State @Model.Organization.ZipCode<br />
+            @if (!string.IsNullOrEmpty(Model.Organization.Phone))
+            {
+                <text>Phone: @Model.Organization.Phone</text><br />
+            }
+            @if (!string.IsNullOrEmpty(Model.Organization.Fax))
+            {
+                <text>Fax: @Model.Organization.Fax</text>
+            }
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- LETTER TYPE & META                                              -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="letter-type-badge badge-denial">
+        Adverse Benefit Determination — @Model.DenialType
+    </div>
+
+    <div class="letter-meta">
+        <span>Date: @FormatDate(Model.LetterDate)</span>
+        <span>Reference: @Model.LetterReferenceId</span>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- MEMBER ADDRESS                                                  -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="address-block">
+        <div class="name">@Model.Member.FullName</div>
+        <div>@Model.Member.AddressLine1</div>
+        @if (!string.IsNullOrWhiteSpace(Model.Member.AddressLine2))
+        {
+            <div>@Model.Member.AddressLine2</div>
+        }
+        <div>@Model.Member.City, @Model.Member.State @Model.Member.ZipCode</div>
+    </div>
+
+    <!-- Salutation -->
+    <div class="letter-body">
+        <p>Dear @Model.Member.FullName,</p>
+
+        <p>
+            This letter is to notify you that your request for prior authorization has been reviewed
+            and a determination has been made. The details of this determination are provided below.
+        </p>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- MEMBER & PLAN INFORMATION                                       -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="section-title">Member &amp; Plan Information</div>
+    <div class="info-grid">
+        <span class="label">Member Name:</span>
+        <span class="value">@Model.Member.FullName</span>
+
+        <span class="label">Member ID:</span>
+        <span class="value">@Model.Member.MemberId</span>
+
+        <span class="label">Date of Birth:</span>
+        <span class="value">@FormatShortDate(Model.Member.DateOfBirth)</span>
+
+        <span class="label">Plan Name:</span>
+        <span class="value">@Model.Plan.PlanName</span>
+
+        @if (!string.IsNullOrEmpty(Model.Plan.GroupNumber))
+        {
+            <span class="label">Group Number:</span>
+            <span class="value">@Model.Plan.GroupNumber</span>
+        }
+
+        <span class="label">Line of Business:</span>
+        <span class="value">@Model.Plan.LineOfBusiness</span>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- AUTHORIZATION DETAILS                                           -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="section-title">Authorization Details</div>
+    <div class="info-grid">
+        <span class="label">Authorization #:</span>
+        <span class="value">@Model.Authorization.AuthorizationNumber</span>
+
+        <span class="label">Request Date:</span>
+        <span class="value">@FormatShortDate(Model.Authorization.RequestDate)</span>
+
+        <span class="label">Decision Date:</span>
+        <span class="value">@FormatShortDate(Model.Authorization.DecisionDate)</span>
+
+        <span class="label">Determination:</span>
+        <span class="value" style="color: #c0392b; font-weight: 700;">DENIED</span>
+
+        <span class="label">Denial Category:</span>
+        <span class="value">@Model.DenialCategory Determination</span>
+
+        <span class="label">Service Type:</span>
+        <span class="value">@Model.Authorization.ServiceType</span>
+
+        @if (!string.IsNullOrEmpty(Model.Authorization.PlaceOfService))
+        {
+            <span class="label">Place of Service:</span>
+            <span class="value">@Model.Authorization.PlaceOfService</span>
+        }
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- REQUESTING PROVIDER                                             -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="section-title">Requesting Provider</div>
+    <div class="info-grid">
+        <span class="label">Provider Name:</span>
+        <span class="value">@Model.RequestingProvider.Name</span>
+
+        @if (!string.IsNullOrEmpty(Model.RequestingProvider.Npi))
+        {
+            <span class="label">NPI:</span>
+            <span class="value">@Model.RequestingProvider.Npi</span>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.RequestingProvider.Specialty))
+        {
+            <span class="label">Specialty:</span>
+            <span class="value">@Model.RequestingProvider.Specialty</span>
+        }
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- SERVICE LINES TABLE                                             -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    @if (Model.Authorization.ServiceLines.Any())
+    {
+        <div class="section-title">Requested Services</div>
+        <table class="service-table">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Description</th>
+                    <th>Units Req.</th>
+                    <th>Units Appr.</th>
+                    <th>Status</th>
+                    <th>Denial Reason</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var line in Model.Authorization.ServiceLines)
+                {
+                    <tr>
+                        <td>@line.ProcedureCode @(!string.IsNullOrEmpty(line.Modifier) ? $"({line.Modifier})" : "")</td>
+                        <td>@line.Description</td>
+                        <td>@(line.UnitsRequested?.ToString() ?? "—")</td>
+                        <td>@(line.UnitsApproved?.ToString() ?? "—")</td>
+                        <td class="status-denied">@line.Status</td>
+                        <td>@line.DenialReasonDescription</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- CLINICAL RATIONALE                                              -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="section-title">Clinical Rationale</div>
+    <div class="letter-body">
+        <p>@Model.ClinicalRationale</p>
+
+        @if (!string.IsNullOrEmpty(Model.GuidelineReference))
+        {
+            <p><strong>Clinical Guideline Reference:</strong> @Model.GuidelineReference</p>
+        }
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- REVIEWING PHYSICIAN                                             -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    @if (!string.IsNullOrEmpty(Model.ReviewerName))
+    {
+        <div class="info-grid" style="margin-top: 8px;">
+            <span class="label">Reviewed By:</span>
+            <span class="value">@Model.ReviewerName@(!string.IsNullOrEmpty(Model.ReviewerCredentials) ? $", {Model.ReviewerCredentials}" : "")</span>
+
+            <span class="label">Review Date:</span>
+            <span class="value">@FormatShortDate(Model.ReviewDate)</span>
+        </div>
+    }
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- APPEAL RIGHTS (Regulatory Requirement)                          -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="callout-box warning">
+        <div class="callout-title">YOUR RIGHT TO APPEAL THIS DECISION</div>
+        <p>
+            You have the right to appeal this decision. Your appeal must be submitted within
+            <strong>@Model.AppealRights.AppealDeadlineDays days</strong> of the date of this notice
+            @if (Model.AppealRights.AppealDeadlineDate.HasValue)
+            {
+                <text>(by <strong>@FormatDate(Model.AppealRights.AppealDeadlineDate)</strong>)</text>
+            }.
+        </p>
+
+        <p><strong>To submit an appeal:</strong></p>
+        <ul>
+            @if (!string.IsNullOrEmpty(Model.AppealRights.AppealSubmissionAddress))
+            {
+                <li><strong>By Mail:</strong> @Model.AppealRights.AppealSubmissionAddress</li>
+            }
+            @if (!string.IsNullOrEmpty(Model.AppealRights.AppealPhone))
+            {
+                <li><strong>By Phone:</strong> @Model.AppealRights.AppealPhone</li>
+            }
+            @if (!string.IsNullOrEmpty(Model.AppealRights.AppealFax))
+            {
+                <li><strong>By Fax:</strong> @Model.AppealRights.AppealFax</li>
+            }
+        </ul>
+
+        @if (Model.AppealRights.HasExpeditedAppealRight)
+        {
+            <p style="margin-top: 8px;">
+                <strong>Expedited Appeal:</strong> If your situation is urgent, you may request an expedited
+                (fast) appeal. An expedited appeal will be decided within
+                <strong>@Model.AppealRights.ExpeditedAppealDeadlineDays hours</strong> of receipt.
+            </p>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.AppealRights.ExternalReviewOrganization))
+        {
+            <p style="margin-top: 8px;">
+                <strong>External Review:</strong> You also have the right to request an independent
+                external review of this decision through
+                <strong>@Model.AppealRights.ExternalReviewOrganization</strong>
+                @if (!string.IsNullOrEmpty(Model.AppealRights.ExternalReviewPhone))
+                {
+                    <text> at @Model.AppealRights.ExternalReviewPhone</text>
+                }.
+            </p>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.AppealRights.StateInsuranceDepartmentInfo))
+        {
+            <p style="margin-top: 8px;">
+                <strong>State Regulatory Agency:</strong> @Model.AppealRights.StateInsuranceDepartmentInfo
+            </p>
+        }
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- ADDITIONAL NOTES                                                -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    @if (Model.AdditionalNotes.Any())
+    {
+        <div class="callout-box">
+            <div class="callout-title">Additional Information</div>
+            @foreach (var note in Model.AdditionalNotes)
+            {
+                <p>• @note</p>
+            }
+        </div>
+    }
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- CONTACT & QUESTIONS                                             -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="letter-body" style="margin-top: 16px;">
+        <p>
+            If you have questions regarding this determination, please contact us at
+            <strong>@Model.ContactPhone</strong> during @Model.ContactHours.
+            @if (!string.IsNullOrEmpty(Model.Website))
+            {
+                <text>You may also visit <strong>@Model.Website</strong> for additional resources.</text>
+            }
+        </p>
+
+        <p>Sincerely,</p>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- SIGNATURE                                                       -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="signature-block">
+        <div class="sig-name">@Model.Organization.Name</div>
+        <div class="sig-title">Utilization Management Department</div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- FOOTER                                                          -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="letter-footer">
+        <div>
+            @Model.Organization.Name | @Model.Organization.FullAddress
+            | @Model.ContactPhone
+        </div>
+        <div class="confidentiality">
+            This communication contains Protected Health Information (PHI) and is intended solely for
+            the individual(s) named above. If you received this in error, please notify us immediately
+            and destroy all copies.
+        </div>
+        @if (!string.IsNullOrEmpty(Model.AdditionalFooterText))
+        {
+            <div style="margin-top: 4px;">@Model.AdditionalFooterText</div>
+        }
+    </div>
+
+</div>
+</body>
+</html>

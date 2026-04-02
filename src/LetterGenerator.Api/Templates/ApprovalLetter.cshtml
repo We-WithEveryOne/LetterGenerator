@@ -1,0 +1,271 @@
+@using LetterGenerator.Core.Models
+@model ApprovalLetterModel
+@{
+    string FormatDate(DateTime? date) => date?.ToString("MMMM dd, yyyy") ?? "N/A";
+    string FormatShortDate(DateTime? date) => date?.ToString("MM/dd/yyyy") ?? "N/A";
+
+    var badgeClass = Model.ApprovalType == "Partial" ? "badge-partial" : "badge-approval";
+    var badgeText = Model.ApprovalType == "Partial"
+        ? "Partial Authorization Approval"
+        : "Authorization Approved";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Authorization Approval – @Model.Member.FullName</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            font-size: 10.5pt; line-height: 1.5; color: #1a1a1a; background: #fff;
+        }
+        .letter-container { max-width: 8.5in; margin: 0 auto; }
+
+        .letter-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            border-bottom: 3px solid #004080; padding-bottom: 12px; margin-bottom: 20px;
+        }
+        .letter-header .org-name { font-size: 16pt; font-weight: 700; color: #004080; }
+        .letter-header .org-info { text-align: right; font-size: 9pt; color: #555; line-height: 1.4; }
+        .letter-header .org-logo img { max-height: 55px; width: auto; }
+
+        .letter-type-badge {
+            display: inline-block; padding: 4px 16px; font-size: 11pt; font-weight: 700;
+            letter-spacing: 1px; text-transform: uppercase; border-radius: 3px; margin-bottom: 16px;
+        }
+        .badge-approval { background-color: #27ae60; color: #fff; }
+        .badge-partial { background-color: #e67e22; color: #fff; }
+
+        .letter-meta {
+            display: flex; justify-content: space-between; margin-bottom: 16px;
+            font-size: 9.5pt; color: #555;
+        }
+        .address-block { margin-bottom: 20px; line-height: 1.6; }
+        .address-block .name { font-weight: 600; }
+
+        .section-title {
+            font-size: 11pt; font-weight: 700; color: #004080;
+            border-bottom: 1px solid #ddd; padding-bottom: 4px;
+            margin-top: 20px; margin-bottom: 10px;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        .info-grid {
+            display: grid; grid-template-columns: 180px 1fr;
+            gap: 4px 12px; margin-bottom: 16px; font-size: 10pt;
+        }
+        .info-grid .label { font-weight: 600; color: #333; }
+        .info-grid .value { color: #1a1a1a; }
+
+        .service-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 9.5pt; }
+        .service-table th {
+            background-color: #004080; color: #fff; padding: 6px 8px;
+            text-align: left; font-weight: 600; font-size: 9pt;
+        }
+        .service-table td { padding: 6px 8px; border-bottom: 1px solid #e0e0e0; }
+        .service-table tr:nth-child(even) { background-color: #f8f9fa; }
+        .status-approved { color: #27ae60; font-weight: 600; }
+        .status-denied { color: #c0392b; font-weight: 600; }
+
+        .letter-body { margin-bottom: 16px; text-align: justify; }
+        .letter-body p { margin-bottom: 10px; }
+
+        .callout-box {
+            border: 2px solid #004080; border-radius: 4px;
+            padding: 14px 16px; margin: 16px 0; background-color: #f0f5fa;
+        }
+        .callout-box .callout-title { font-weight: 700; font-size: 10.5pt; color: #004080; margin-bottom: 8px; }
+        .callout-box p { font-size: 9.5pt; margin-bottom: 4px; }
+
+        .signature-block { margin-top: 30px; margin-bottom: 10px; }
+        .signature-block .sig-name { font-weight: 600; }
+        .signature-block .sig-title { font-size: 9.5pt; color: #555; }
+
+        .letter-footer {
+            margin-top: 30px; padding-top: 12px; border-top: 2px solid #004080;
+            font-size: 8.5pt; color: #777; text-align: center; line-height: 1.5;
+        }
+        .letter-footer .confidentiality { font-style: italic; margin-top: 6px; }
+
+        @@media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .callout-box, .service-table { break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+<div class="letter-container">
+
+    <!-- LETTERHEAD -->
+    <div class="letter-header">
+        <div>
+            @if (!string.IsNullOrEmpty(Model.LogoBase64))
+            {
+                <div class="org-logo">
+                    <img src="data:@Model.LogoContentType;base64,@Model.LogoBase64" alt="@Model.Organization.Name" />
+                </div>
+            }
+            <div class="org-name">@Model.Organization.Name</div>
+        </div>
+        <div class="org-info">
+            @Model.Organization.AddressLine1<br />
+            @Model.Organization.City, @Model.Organization.State @Model.Organization.ZipCode<br />
+            @if (!string.IsNullOrEmpty(Model.Organization.Phone))
+            {
+                <text>Phone: @Model.Organization.Phone</text>
+            }
+        </div>
+    </div>
+
+    <div class="letter-type-badge @badgeClass">@badgeText</div>
+
+    <div class="letter-meta">
+        <span>Date: @FormatDate(Model.LetterDate)</span>
+        <span>Reference: @Model.LetterReferenceId</span>
+    </div>
+
+    <!-- MEMBER ADDRESS -->
+    <div class="address-block">
+        <div class="name">@Model.Member.FullName</div>
+        <div>@Model.Member.AddressLine1</div>
+        @if (!string.IsNullOrWhiteSpace(Model.Member.AddressLine2))
+        {
+            <div>@Model.Member.AddressLine2</div>
+        }
+        <div>@Model.Member.City, @Model.Member.State @Model.Member.ZipCode</div>
+    </div>
+
+    <div class="letter-body">
+        <p>Dear @Model.Member.FullName,</p>
+        <p>
+            We are pleased to inform you that your request for prior authorization has been reviewed
+            and <strong>approved</strong>. The details of this authorization are provided below.
+        </p>
+    </div>
+
+    <!-- MEMBER & PLAN INFO -->
+    <div class="section-title">Member &amp; Plan Information</div>
+    <div class="info-grid">
+        <span class="label">Member Name:</span>
+        <span class="value">@Model.Member.FullName</span>
+        <span class="label">Member ID:</span>
+        <span class="value">@Model.Member.MemberId</span>
+        <span class="label">Date of Birth:</span>
+        <span class="value">@FormatShortDate(Model.Member.DateOfBirth)</span>
+        <span class="label">Plan Name:</span>
+        <span class="value">@Model.Plan.PlanName</span>
+    </div>
+
+    <!-- AUTHORIZATION DETAILS -->
+    <div class="section-title">Authorization Details</div>
+    <div class="info-grid">
+        <span class="label">Authorization #:</span>
+        <span class="value">@Model.Authorization.AuthorizationNumber</span>
+        <span class="label">Decision Date:</span>
+        <span class="value">@FormatShortDate(Model.Authorization.DecisionDate)</span>
+        <span class="label">Determination:</span>
+        <span class="value" style="color: #27ae60; font-weight: 700;">APPROVED</span>
+        <span class="label">Service Type:</span>
+        <span class="value">@Model.Authorization.ServiceType</span>
+        <span class="label">Service Date(s):</span>
+        <span class="value">@FormatShortDate(Model.Authorization.ServiceStartDate) – @FormatShortDate(Model.Authorization.ServiceEndDate)</span>
+
+        @if (Model.ApprovalExpirationDate.HasValue)
+        {
+            <span class="label">Authorization Valid Until:</span>
+            <span class="value" style="font-weight: 600;">@FormatDate(Model.ApprovalExpirationDate)</span>
+        }
+    </div>
+
+    <!-- PROVIDER -->
+    <div class="section-title">Requesting Provider</div>
+    <div class="info-grid">
+        <span class="label">Provider Name:</span>
+        <span class="value">@Model.RequestingProvider.Name</span>
+        @if (!string.IsNullOrEmpty(Model.RequestingProvider.Npi))
+        {
+            <span class="label">NPI:</span>
+            <span class="value">@Model.RequestingProvider.Npi</span>
+        }
+    </div>
+
+    <!-- APPROVED SERVICE LINES -->
+    @if (Model.Authorization.ServiceLines.Any())
+    {
+        <div class="section-title">Approved Services</div>
+        <table class="service-table">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Description</th>
+                    <th>Units Requested</th>
+                    <th>Units Approved</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var line in Model.Authorization.ServiceLines)
+                {
+                    <tr>
+                        <td>@line.ProcedureCode</td>
+                        <td>@line.Description</td>
+                        <td>@(line.UnitsRequested?.ToString() ?? "—")</td>
+                        <td>@(line.UnitsApproved?.ToString() ?? "—")</td>
+                        <td class="status-approved">@line.Status</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <!-- CONDITIONS -->
+    @if (Model.Conditions.Any())
+    {
+        <div class="callout-box">
+            <div class="callout-title">Conditions &amp; Limitations</div>
+            @foreach (var condition in Model.Conditions)
+            {
+                <p>• @condition</p>
+            }
+            @foreach (var limitation in Model.Limitations)
+            {
+                <p>• @limitation</p>
+            }
+        </div>
+    }
+
+    <!-- PARTIAL APPROVAL DETAILS -->
+    @if (Model.ApprovalType == "Partial" && !string.IsNullOrEmpty(Model.PartialApprovalExplanation))
+    {
+        <div class="callout-box" style="border-color: #e67e22; background-color: #fef6ee;">
+            <div class="callout-title" style="color: #e67e22;">Partial Approval Notice</div>
+            <p>@Model.PartialApprovalExplanation</p>
+        </div>
+    }
+
+    <!-- CONTACT -->
+    <div class="letter-body" style="margin-top: 16px;">
+        <p>
+            If you have questions, please contact us at <strong>@Model.ContactPhone</strong>
+            during @Model.ContactHours.
+        </p>
+        <p>Sincerely,</p>
+    </div>
+
+    <div class="signature-block">
+        <div class="sig-name">@Model.Organization.Name</div>
+        <div class="sig-title">Utilization Management Department</div>
+    </div>
+
+    <div class="letter-footer">
+        <div>@Model.Organization.Name | @Model.Organization.FullAddress | @Model.ContactPhone</div>
+        <div class="confidentiality">
+            This communication contains Protected Health Information (PHI) and is intended solely for
+            the individual(s) named above. If you received this in error, please notify us immediately.
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
