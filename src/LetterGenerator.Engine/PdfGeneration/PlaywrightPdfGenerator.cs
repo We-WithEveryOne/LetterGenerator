@@ -1,6 +1,11 @@
 using LetterGenerator.Core.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace LetterGenerator.Engine.PdfGeneration;
 
@@ -41,10 +46,45 @@ public class PlaywrightPdfGenerator : IPdfGenerator, IAsyncDisposable
 
             _logger.LogInformation("Initializing Playwright and launching Chromium...");
             _playwright = await Playwright.CreateAsync();
-            _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+
+            try
             {
-                Headless = true
-            });
+                _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+                {
+                    Headless = true
+                });
+            }
+            catch (PlaywrightException ex) when (ex.Message?.Contains("Executable doesn't exist", StringComparison.OrdinalIgnoreCase) == true
+                                                 || ex.Message?.Contains("Please run", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                _logger.LogWarning(ex, "Playwright browser executable not found. Attempting to run Playwright install script from published output.");
+
+                var baseDir = AppContext.BaseDirectory ?? Environment.CurrentDirectory;
+                var scriptPath = Path.Combine(baseDir, "playwright.ps1");
+
+                if (File.Exists(scriptPath))
+                {
+                    _logger.LogInformation("Found playwright install script at {ScriptPath}. Running installer...", scriptPath);
+                    var installed = await RunPlaywrightInstallScriptAsync(scriptPath);
+                    if (!installed)
+                    {
+                        _logger.LogError("Failed to run playwright install script. Please run it manually in the application output folder: pwsh playwright.ps1 install");
+                        throw;
+                    }
+
+                    _logger.LogInformation("Playwright install script completed. Retrying browser launch...");
+                    _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+                    {
+                        Headless = true
+                    });
+                }
+                else
+                {
+                    _logger.LogError("playwright.ps1 not found at {ScriptPath}. Please run 'playwright install' manually in your project output folder.", scriptPath);
+                    throw;
+                }
+            }
+
             _initialized = true;
             _logger.LogInformation("Playwright Chromium browser launched successfully.");
         }
@@ -52,6 +92,57 @@ public class PlaywrightPdfGenerator : IPdfGenerator, IAsyncDisposable
         {
             _initLock.Release();
         }
+    }
+
+    private static async Task<bool> RunPlaywrightInstallScriptAsync(string scriptPath)
+    {
+        // Try pwsh first, then powershell
+        string[] candidates = { "pwsh", "powershell" };
+
+        foreach (var exe in candidates)
+        {
+            try
+            {
+                var args = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" install";
+
+                var psi = new ProcessStartInfo
+                {
+                    FileName = exe,
+                    Arguments = args,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                };
+
+                using var proc = Process.Start(psi);
+                if (proc == null) continue;
+
+                var outputTask = proc.StandardOutput.ReadToEndAsync();
+                var errorTask = proc.StandardError.ReadToEndAsync();
+
+                await Task.WhenAll(outputTask, errorTask);
+                var output = outputTask.Result;
+                var error = errorTask.Result;
+
+                proc.WaitForExit();
+
+                // Helpful diagnostic output (console used — logger not available in static helper)
+                if (!string.IsNullOrWhiteSpace(output))
+                    Console.WriteLine(output);
+                if (!string.IsNullOrWhiteSpace(error))
+                    Console.Error.WriteLine(error);
+
+                if (proc.ExitCode == 0)
+                    return true;
+            }
+            catch
+            {
+                // ignore and try next candidate
+            }
+        }
+
+        return false;
     }
 
     public async Task<byte[]> GeneratePdfAsync(string htmlContent, PdfOptions? options = null)
@@ -77,7 +168,6 @@ public class PlaywrightPdfGenerator : IPdfGenerator, IAsyncDisposable
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
             // Generate PDF
-
             var pdfBytes = await page.PdfAsync(new PagePdfOptions
             {
                 Format = options.Format,

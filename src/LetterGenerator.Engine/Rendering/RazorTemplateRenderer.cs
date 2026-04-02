@@ -1,6 +1,9 @@
 using LetterGenerator.Core.Interfaces;
 using Microsoft.Extensions.Logging;
 using RazorLight;
+using Microsoft.CodeAnalysis;
+using System.Reflection;
+using System.Linq;
 
 namespace LetterGenerator.Engine.Rendering;
 
@@ -26,9 +29,25 @@ public class RazorTemplateRenderer : IRazorTemplateRenderer
                 $"Template directory not found: {absolutePath}");
         }
 
+        // Build metadata references from currently loaded assemblies (excluding dynamic/in-memory ones).
+        // This provides RazorLight the compilation references it needs at runtime.
+        var assemblies = AppDomain.CurrentDomain.GetAssemblies()
+            .Where(a => !a.IsDynamic && !string.IsNullOrEmpty(a.Location))
+            .ToArray();
+
+        // Create an array of MetadataReference (not List<PortableExecutableReference>).
+        var references = assemblies
+            .Select(a => MetadataReference.CreateFromFile(a.Location))
+            .ToArray();
+
+        // Choose a sensible "operating" assembly for Razor compilation (entry or executing assembly).
+        var operatingAssembly = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
+
         _engine = new RazorLightEngineBuilder()
             .UseFileSystemProject(absolutePath)
             .UseMemoryCachingProvider()
+            .SetOperatingAssembly(operatingAssembly)
+            .AddMetadataReferences(references)
             .EnableDebugMode()          // Better error messages during development
             .Build();
 
