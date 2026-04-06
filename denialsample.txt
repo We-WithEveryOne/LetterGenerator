@@ -1,0 +1,111 @@
+{
+  "letterType": "Denial",
+  "letterReferenceId": "DL-20260402-0001",
+  "letterDate": "2026-04-02T08:00:00Z",
+  "effectiveDate": "2026-04-02T00:00:00Z",
+  "organization": {
+    "name": "Acme Health Plan",
+    "addressLine1": "100 Health Way",
+    "addressLine2": "Suite 400",
+    "city": "Anytown",
+    "state": "NY",
+    "zipCode": "12345",
+    "phone": "1-800-555-1234",
+    "fax": "1-800-555-5678"
+  },
+  "plan": {
+    "planName": "Acme Health Premier",
+    "planId": "ACME-12345",
+    "groupNumber": "GRP-67890",
+    "lineOfBusiness": "Commercial"
+  },
+  "member": {
+    "firstName": "Jane",
+    "lastName": "Doe",
+    "memberId": "M123456789",
+    "dateOfBirth": "1985-06-15T00:00:00Z",
+    "addressLine1": "12 Maple Street",
+    "addressLine2": "Apt 2B",
+    "city": "Anytown",
+    "state": "NY",
+    "zipCode": "12345"
+  },
+  "requestingProvider": {
+    "name": "Dr. Alan Smith",
+    "npi": "1234567890",
+    "taxId": "12-3456789",
+    "specialty": "Cardiology",
+    "phone": "1-212-555-0100",
+    "fax": "1-212-555-0101",
+    "addressLine1": "200 Clinic Drive",
+    "city": "Anytown",
+    "state": "NY",
+    "zipCode": "12345"
+  },
+  "servicingProvider": {
+    "name": "Anytown General Hospital",
+    "npi": "0987654321",
+    "taxId": "98-7654321",
+    "specialty": "Acute Care",
+    "phone": "1-212-555-0200",
+    "fax": "1-212-555-0201",
+    "addressLine1": "300 Hospital Blvd",
+    "city": "Anytown",
+    "state": "NY",
+    "zipCode": "12345"
+  },
+  "authorization": {
+    "authorizationNumber": "AUTH-2026-000987",
+    "requestDate": "2026-03-20T12:00:00Z",
+    "decisionDate": "2026-03-25T15:30:00Z",
+    "serviceStartDate": "2026-04-01T00:00:00Z",
+    "serviceEndDate": "2026-04-30T00:00:00Z",
+    "serviceType": "Inpatient",
+    "placeOfService": "Hospital",
+    "serviceLines": [
+      {
+        "procedureCode": "99223",
+        "description": "Initial hospital care, per day",
+        "unitsRequested": 5,
+        "unitsApproved": 0,
+        "modifier": "",
+        "status": "Denied",
+        "denialReasonCode": "D01",
+        "denialReasonDescription": "Not medically necessary based on submitted documentation."
+      }
+    ]
+  },
+  "contactPhone": "1-800-555-1234",
+  "contactFax": "1-800-555-5678",
+  "contactHours": "Mon-Fri 8:00-17:00",
+  "website": "https://www.acmehealthplan.com",
+  "additionalFooterText": "If you disagree with this decision, you may appeal. See appeal rights below.",
+  "logoBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQImWNgYGD4DwABBAEAe8z7qQAAAABJRU5ErkJggg==",
+  "logoContentType": "image/png",
+  "denialType": "Clinical",
+  "denialCategory": "Medical Necessity",
+  "urgencyLevel": "Standard",
+  "clinicalRationale": "Clinical documentation submitted does not demonstrate the need for the requested level of care or duration of services.",
+  "guidelineReference": "Acme Clinical Guideline 3.1 — Inpatient Criteria",
+  "reviewerName": "Rebecca Johnson",
+  "reviewerCredentials": "RN, Utilization Review",
+  "reviewDate": "2026-03-25T15:30:00Z",
+  "appealRights": {
+    "appealDeadlineDays": 30,
+    "appealDeadlineDate": "2026-04-24T00:00:00Z",
+    "appealSubmissionAddress": "Appeals Department, Acme Health Plan, 100 Health Way, Anytown, NY 12345",
+    "appealPhone": "1-800-555-2000",
+    "appealFax": "1-800-555-2001",
+    "hasExpeditedAppealRight": true,
+    "expeditedAppealDeadlineDays": 2,
+    "externalReviewOrganization": "Independent Medical Review Org (IMRO)",
+    "externalReviewPhone": "1-800-555-3000",
+    "stateInsuranceDepartmentInfo": "State Insurance Dept: Consumer Assistance Hotline 1-800-STATE-INS"
+  },
+  "additionalNotes": [
+    "Clinical records provided were insufficient to support admission criteria.",
+    "Provider may submit additional documentation for reconsideration."
+  ],
+  "externalReviewInfo": "If your internal appeal is denied, you may request an external review by the Independent Medical Review Organization. Contact: 1-800-555-3000.",
+  "medicaidFairHearingInfo": "Medicaid members may request a fair hearing within 90 days of this decision. Contact your state Medicaid office for instructions."
+}
