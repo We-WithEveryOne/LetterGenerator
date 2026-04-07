@@ -2,16 +2,7 @@
 
 A modern .NET 9 Web API that replaces legacy Java/HTML letter generation pipelines with **Razor templates + Playwright PDF rendering**.
 
-## Why This Exists
 
-| Old Process | New Process |
-|---|---|
-| Edit HTML template in DB table | Edit `.cshtml` file in source control |
-| Save to letter_driver / letters tables | No database tables needed for templates |
-| Run batch job to see output | Hit `/preview` endpoint → instant HTML |
-| Java JAR processes HTML | Razor engine (built into .NET) |
-| Manually check alignment/images | Live browser preview, same engine as PDF |
-| Change → deploy → run job → check | Change → refresh browser → done |
 
 ## Solution Structure
 
